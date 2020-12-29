@@ -1,0 +1,54 @@
+- name: dependency provisioning
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: false
+  tasks:
+    - name: install python
+      raw: sudo apt-get -y install python python-mysqldb
+
+- name: get zabbix-repo
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: true
+  tasks:
+    - name: install zabbix-repo
+      apt:
+        deb: https://repo.zabbix.com/zabbix/4.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_4.0-3+bionic_all.deb
+        update_cache: yes
+
+- name: Install a zabbix server
+  hosts: zabbix_s
+  become: yes
+  become_method: sudo
+  gather_facts: true
+  tasks:
+    - name: install zabbix-server
+      apt: name=zabbix-server-mysql update_cache=yes
+    - name: install frontand
+      apt: name=zabbix-frontend-php update_cache=yes
+    - name: install zabbix-server
+      apt: name=zabbix-agent update_cache=yes
+
+- name: create mysql user
+  hosts: zabbix_s
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: create mysql user
+    mysql_user:
+      name: zabbix
+      password: zabbix
+      priv: '*.*:ALL,GRANT'
+      state: present
+
+- name: Create a new database with name 'zabbix'
+  hosts: zabbix_s
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Create a new database with name 'zabbix'
+    mysql_db:
+      name: zabbix
+      state: present

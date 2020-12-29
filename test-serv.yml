@@ -1,0 +1,49 @@
+- name: Install git
+  hosts: build
+  become: True
+  tasks:
+    - name: install git
+      apt: name=git update_cache=yes
+
+- name: Clone git repo
+  hosts: build
+  become: True
+  tasks:
+    - name: clone repo
+      git:
+        repo: https://github.com/boxfuse/boxfuse-sample-java-war-hello.git
+        clone: yes
+        dest: /root/repo
+
+- name: Install maven
+  hosts: build
+  become: True
+  tasks:
+    - name: install maven
+      apt: name=maven update_cache=yes
+
+- name: Execute mvn pom.xml
+  hosts: build
+  become: True
+  tasks:
+    - name: Execute mvn pom.xml
+      command: mvn package -f /root/repo/pom.xml
+
+- name: Copy files
+  hosts: 'build:prod'
+  tasks:
+    - name: Fetch the file from the test to master
+      run_once: yes
+      fetch: src=//root/repo/target/hello-1.0.war dest=buffer/ flat=yes
+      when: inventory_hostname == 'build1'
+
+    - name: Copy the file from master to prod
+      copy: src=buffer/hello-1.0.war dest=/var/lib/tomcat9/webapps/
+      when: inventory_hostname == 'prod1'
+
+- name: Install tomcat
+  hosts: prod
+  become: True
+  tasks:
+    - name: install tomcat9
+      apt: name=tomcat9 update_cache=yes

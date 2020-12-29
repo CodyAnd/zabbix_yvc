@@ -1,0 +1,4 @@
+[zabbix_s]
+zabbix_s ansible_host=130.193.41.209
+[zabbix_a]
+zabbix_a ansible_host=130.193.42.86
